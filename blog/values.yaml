@@ -1,0 +1,201 @@
+# Default values for blog.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: https://hub.docker.com/tianya2022/laravel-blog
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+annotations: {}
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+## Prometheus Exporter / Metrics
+##
+metrics:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: nginx/nginx-prometheus-exporter
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    pullSecrets: []
+    #   - myRegisterKeySecretName
+  ## Metrics exporter pod Annotation and Labels
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9113"
+    ## Metrics exporter resource requests and limits
+    ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+  resources: {}
+
+database:
+  host: mariadb-mariadb.db
+  # User could not be the same as db name due to a max length issue.
+  user: laravel
+  password: "laravel" # Defined at apply time.
+  name: laravel
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: blog.test.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+blogPhpFpm:
+  name: blog-phpFpm
+  type: NodePort
+  port: 9000
+  protocol: TCP
+
+blogService:
+  type: ClusterIP  # 一般不用修改, 支持ClusterIP/LoadBalancer/NodePort
+  loadBalancerIP: ""
+  externalTrafficPolicy: Cluster  # 支持Cluster/Local
+  ports:
+    ## 多端口暴露时，复制一段
+    http:
+      port: 8080  # Service port number for client-a port.
+      protocol: TCP  # Service port protocol for client-a port.
+  clusterIP: ""
+  sessionAffinity: None
+
+## liveness and readiness
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+healthCheck:
+  enabled: false
+  type: http  # http/tcp
+  port: http  # 上面的端口名或端口
+  httpPath: '/'  # http时必须设置
+  livenessInitialDelaySeconds: 10  # 初始延迟秒数
+  livenessPeriodSeconds: 10  # 检测周期，默认值10，最小为1
+  readinessInitialDelaySeconds: 10  # 初始延迟秒数
+  readinessPeriodSeconds: 10   # 检测周期，默认值10，最小为1
+
+## env set
+## ref: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+env:
+  - name: APP_KEY
+    value: "base64:cUPmwHx4LXa4Z25HhzFiWCf7TlQmSqnt98pnuiHmzgY="
+
+resources:
+   limits:
+     cpu: 100m
+     memory: 128Mi
+   requests:
+     cpu: 100m
+     memory: 128Mi
+
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+## nginx config
+nginxService:
+  name: blog-nginx
+  type: NodePort
+  externalPort: 80
+  internalPort: 8080
+  host: blog.test.com
+
+## Enable configmap and add data in configmap
+config:
+  enabled: false
+  mountPath: /conf
+  subPath: ""
+  readOnly: true
+  data:
+      
+
+## To use an additional secret, set enable to true and add data
+secret:
+  enabled: false
+  mountPath: /etc/secret-volume
+  subPath: ""
+  readOnly: true
+  data: {}
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+labels: {}
+
+tolerations: []
+
+affinity: {}
+

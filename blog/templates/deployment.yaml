@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blog.name" . }}-dep
+  labels:
+    {{- include "blog.labels" . | nindent 4 }}
+    chart: {{ template "blog.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.labels }}
+{{ toYaml .Values.labels | indent 4 }}
+{{- end }}
+{{- if .Values.annotations }}
+  annotations:
+{{ toYaml .Values.annotations | indent 4 }}
+{{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: {{ template "blog.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "blog.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+        - name: source-code
+          emptyDir: {}
+        - name: nginx-vhost
+          configMap:
+            name: {{ template "blog.name" . }}-nginx-vhost
+      containers:
+        # Nginx Container
+        - name: {{ .Values.nginxService.name }}
+          image: "bitnami/nginx:latest"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.nginxService.internalPort }}
+          volumeMounts:
+            - name: nginx-vhost
+              mountPath: /bitnami/nginx/conf/vhosts
+            - name: source-code
+              mountPath: /var/www/blog/
+        # blog Container
+        - name: {{ .Values.blogPhpFpm.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.blogPhpFpm.name }}
+              containerPort: {{ .Values.blogPhpFpm.port }}
+              protocol: {{ .Values.blogPhpFpm.protocol }}
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "cp -r /var/www/. /var/www/blog/"]
+          volumeMounts:
+            - name: source-code
+              mountPath: /var/www/blog
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
