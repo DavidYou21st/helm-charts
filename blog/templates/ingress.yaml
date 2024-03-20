@@ -20,7 +20,8 @@ spec:
     - host: {{ $host }}
       http:
         paths:
-          - path: /
+          - path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
                 name: {{ $serviceName }}-nginx

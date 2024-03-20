@@ -58,6 +58,8 @@ ingress:
   enabled: true
   hosts:
     - "blog.test.com"
+  pathType: ImplementationSpecific
+  path: /
   annotations:
     kubernetes.io/ingress.class: "nginx"
     kubernetes.io/tls-acme: "true"
