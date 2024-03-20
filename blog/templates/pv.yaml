@@ -6,8 +6,7 @@ metadata:
     type: local
     pv: {{ template "fullname" . }}-pv
 spec:
-  storageClassName: manual
-  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: blog-sc
   capacity:
     storage: 5Gi
   accessModes:
