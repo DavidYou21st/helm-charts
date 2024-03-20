@@ -28,7 +28,7 @@ blogService:
   indexFile: index.php
 persistence:
   enabled: false
-  storageClass: hostpath
+  storageClass: blog-sc
   accessMode: ReadWriteMany
   size: 3Gi
   existingClaim: ""
