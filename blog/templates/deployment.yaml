@@ -1,79 +1,112 @@
-apiVersion: apps/v1
+apiVersion: {{ template "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ include "blog.name" . }}-dep
+  name: {{ template "fullname" . }}-blog
   labels:
-    {{- include "blog.labels" . | nindent 4 }}
-    chart: {{ template "blog.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-{{- if .Values.labels }}
-{{ toYaml .Values.labels | indent 4 }}
-{{- end }}
-{{- if .Values.annotations }}
-  annotations:
-{{ toYaml .Values.annotations | indent 4 }}
-{{- end }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
   replicas: {{ .Values.replicaCount }}
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
   selector:
     matchLabels:
-      app: {{ template "blog.name" . }}
-      release: {{ .Release.Name }}
+      app: {{ template "fullname" . }}-blog
   template:
     metadata:
       labels:
-        app: {{ template "blog.name" . }}
-        release: {{ .Release.Name }}
+        app: {{ template "fullname" . }}-blog
     spec:
-      volumes:
-        - name: source-code
-          emptyDir: {}
-        - name: nginx-vhost
-          configMap:
-            name: {{ template "blog.name" . }}-nginx-vhost
       containers:
-        # Nginx Container
-        - name: {{ .Values.nginxService.name }}
-          image: "bitnami/nginx:latest"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.nginxService.internalPort }}
-          volumeMounts:
-            - name: nginx-vhost
-              mountPath: /bitnami/nginx/conf/vhosts
-            - name: source-code
-              mountPath: /var/www/blog/
-        # blog Container
-        - name: {{ .Values.blogPhpFpm.name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: {{ .Values.blogPhpFpm.name }}
-              containerPort: {{ .Values.blogPhpFpm.port }}
-              protocol: {{ .Values.blogPhpFpm.protocol }}
-          lifecycle:
-            postStart:
-              exec:
-                command: ["/bin/sh", "-c", "cp -r /var/www/. /var/www/blog/"]
-          volumeMounts:
-            - name: source-code
-              mountPath: /var/www/blog
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
+      - name: {{ template "fullname" . }}-blog
+        image: "{{.Values.image.registry}}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        {{- if .Values.mariadb.enabled }}
+          - name: MARIADB_HOST
+            value: {{ include "blog.databaseHost" . | quote }}
+          - name: MARIADB_PORT
+            value: {{ include "blog.databasePort" . | quote }}
+          - name: MARIADB_DATABASE_NAME
+            value: {{ include "blog.databaseName" . | quote }}
+          - name: MARIADB_DATABASE_USER
+            value: {{ include "blog.databaseUser" . | quote }}
+          - name: MARIADB_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "blog.databaseSecretName" . | quote }}
+                key: mariadb-password
+      {{ end }}
+      {{- if .Values.extraEnv }}
+      {{- include "blog.tplValue" (dict "value" .Values.extraEnv "context" $) | nindent 12 }}
       {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        ports:
+        - containerPort: {{ .Values.blogService.blogPort }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.blogService.blogPort }}
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        lifecycle:
+          postStart:
+            exec:
+              command: [ "/bin/sh", "-c", "cp -r /var/www/. /var/www/blog" ]
+        volumeMounts:
+          - name: blog-pvc #用到定义的存储卷
+            mountPath: /var/www/blog  #目录映射 /var/www/blog 到存储卷 code
+      volumes:
+        - name: blog-pvc
+          persistentVolumeClaim:
+            claimName: {{ template "fullname" . }}-pvc
+
+---
+apiVersion: {{ template "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}-nginx
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}-nginx
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}-nginx
+#      annotations:
+#        checksum/config: {{ include (print $.Template.BasePath "/configMap.yaml") . | sha256sum }}
+    spec:
+      containers:
+      - name: {{ template "fullname" . }}-nginx
+        image: "bitnami/nginx:latest"
+        imagePullPolicy: {{ default "" .Values.image.pullPolicy | quote }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.nginxService.internalPort }}
+        - name: https
+          containerPort: 8443
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /opt/bitnami/nginx/conf/server_blocks
+        - name: blog-pvc
+          mountPath: /var/www/blog
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: {{ template "fullname" . }}
+        - name: blog-pvc
+          persistentVolumeClaim:
+            claimName: {{ template "fullname" . }}-pvc

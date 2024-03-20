@@ -20,10 +20,13 @@ This chart bootstraps a [blog-chart Open Source](https://github.com/DavidYou21st
 To install the chart with the release name `my-blog`:
 
 ```bash
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
 $ helm repo add davidyou https://github.com/davidYou21st/charts/
 $ helm repo update
-$ helm pull davidyou/blog-chart
-$ ./blog-chart/bin/publish_chart.sh
+$ helm dep build
+$ helm dependency update
+$ helm pull davidyou/blog-chart --untar
+$ helm install my-blog ./blog-chart
 ```
 
 These commands deploy blog-chart Open Source on the Kubernetes cluster in the default configuration.
