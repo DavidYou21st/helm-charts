@@ -74,8 +74,6 @@ spec:
     metadata:
       labels:
         app: {{ template "fullname" . }}-nginx
-#      annotations:
-#        checksum/config: {{ include (print $.Template.BasePath "/configMap.yaml") . | sha256sum }}
     spec:
       containers:
       - name: {{ template "fullname" . }}-nginx
