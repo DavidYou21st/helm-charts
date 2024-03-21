@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: {{ template "fullname" . }}-blog
-        image: "{{.Values.image.registry}}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         {{- if .Values.mariadb.enabled }}
