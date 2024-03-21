@@ -99,12 +99,12 @@ spec:
         volumeMounts:
         - name: nginx-config
           mountPath: /opt/bitnami/nginx/conf/server_blocks
-        - name: blog-pvc
+        - name: nginx-pvc
           mountPath: /var/www/blog
       volumes:
         - name: nginx-config
           configMap:
             name: {{ template "fullname" . }}
-        - name: blog-pvc
+        - name: nginx-pvc
           persistentVolumeClaim:
             claimName: {{ template "fullname" . }}-pvc

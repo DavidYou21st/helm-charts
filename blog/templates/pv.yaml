@@ -8,9 +8,11 @@ metadata:
 spec:
   {{ include "storageClass" . }}
   persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
   capacity:
-    storage: 5Gi
+    storage: {{ .Values.persistence.size | quote }}
   accessModes:
     - ReadWriteOnce
   hostPath:
     path: "/var"
+    type: DirectoryOrCreate

@@ -1,10 +1,10 @@
 {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
-kind: PersistentVolumeClaim
 apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
   name: {{ template "fullname" . }}-pvc
   labels:
-    app: {{ template "fullname" . }}
+    app: {{ template "fullname" . }}-pvc
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
