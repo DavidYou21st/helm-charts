@@ -28,7 +28,7 @@ blogService:
   indexFile: index.php
 persistence:
   enabled: true
-  storageClass: blog-sc
+  storageClass: nfs-storage
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: ""
@@ -76,3 +76,11 @@ resources:
     cpu: 80m
     memory: 128Mi
 extraEnv:
+nfs:
+  name: nfs-storage
+  server: "192.168.100.21"    #这里改成刚刚nfs-server服务器的ip
+  path: "/home/vagrant/workplace/nfs"            #这里改成nfs-server服务器的路径
+  mountOptions:
+  volumeName: nfs-dir-external-provisioner
+  # Reclaim policy for the main nfs volume
+  reclaimPolicy: Retain

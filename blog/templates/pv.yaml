@@ -6,7 +6,6 @@ metadata:
     type: local
     pv: {{ template "fullname" . }}-pv
 spec:
-  {{ include "storageClass" . }}
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   capacity:
@@ -16,3 +15,7 @@ spec:
   hostPath:
     path: "/var"
     type: DirectoryOrCreate
+  storageClassName: {{ .Values.persistence.storageClass }}
+  nfs:
+    path: /nfs/data/pv002
+    server: 192.168.0.29
