@@ -8,15 +8,15 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "fullname" . }}-blog
+      app: {{ template "name" . }}-blog
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}-blog
+        app: {{ template "name" . }}-blog
     spec:
       containers:
-      - name: {{ template "fullname" . }}-blog
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      - name: {{ template "name" . }}-blog
+        image: {{ template "blog.image" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         {{- if .Values.mariadb.enabled }}

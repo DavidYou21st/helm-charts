@@ -11,6 +11,7 @@ global:
 nameOverride: ""
 replicaCount: 1
 image:
+  registry: docker.io
   repository: tianya2022/laravel-blog
   tag: latest
   pullPolicy: IfNotPresent
