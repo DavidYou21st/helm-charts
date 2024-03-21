@@ -27,7 +27,7 @@ blogService:
   blogPort: 9000
   indexFile: index.php
 persistence:
-  enabled: false
+  enabled: true
   storageClass: blog-sc
   accessMode: ReadWriteMany
   size: 3Gi
