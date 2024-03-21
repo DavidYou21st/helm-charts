@@ -56,7 +56,7 @@ spec:
       volumes:
         - name: blog-pvc
           persistentVolumeClaim:
-            claimName: testpvc
+            claimName: app-pvc
 
 ---
 apiVersion: {{ template "common.capabilities.deployment.apiVersion" . }}
@@ -107,4 +107,4 @@ spec:
             name: {{ template "name" . }}-cm
         - name: nginx-pvc
           persistentVolumeClaim:
-            claimName: testpvc
+            claimName: app-pvc
