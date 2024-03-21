@@ -2,9 +2,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ template "fullname" . }}-pvc
+  name: app-pvc
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.persistence.storageClass | quote }}
 spec:
-  storageClassName: {{ .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass | quote }}
   accessModes:
     - {{ .Values.persistence.accessMode | quote }}
   resources:

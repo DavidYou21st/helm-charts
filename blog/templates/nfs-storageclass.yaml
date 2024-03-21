@@ -1,4 +1,3 @@
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -71,11 +70,16 @@ roleRef:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: nfs-{{ .Values.nfs.name }}
-provisioner: k8s-sigs.io/nfs-subdir-external-provisioner # 指定NFS作为存储提供者
+  name: {{ .Values.persistence.storageClass | quote }}
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: 'true'
+provisioner: k8s/nfs-subdir-external-provisioner # 指定NFS作为存储提供者
 allowVolumeExpansion: true
 parameters:
   archiveOnDelete: "true" # 当删除PersistentVolumeClaim时，将PV文件系统备份后删除
+  server: {{ .Values.nfs.server | quote }}
+  path: {{ .Values.nfs.path | quote }}
+  readOnly: "false"
 ---
 apiVersion: apps/v1
 kind: Deployment

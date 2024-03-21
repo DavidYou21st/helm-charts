@@ -52,11 +52,11 @@ spec:
               command: [ "/bin/sh", "-c", "cp -r /var/www/. /var/www/blog" ]
         volumeMounts:
           - name: blog-pvc #用到定义的存储卷
-            mountPath: /var/www/blog  #目录映射 /var/www/blog 到存储卷 code
+            mountPath: {{ .Values.blogService.path | quote }}  #目录映射 /var/www/blog 到存储卷 /var/www/blog
       volumes:
         - name: blog-pvc
           persistentVolumeClaim:
-            claimName: {{ template "fullname" . }}-pvc
+            claimName: testpvc
 
 ---
 apiVersion: {{ template "common.capabilities.deployment.apiVersion" . }}
@@ -100,11 +100,11 @@ spec:
         - name: nginx-config
           mountPath: /opt/bitnami/nginx/conf/server_blocks
         - name: nginx-pvc
-          mountPath: /var/www/blog
+          mountPath: {{ .Values.blogService.path | quote }}
       volumes:
         - name: nginx-config
           configMap:
-            name: {{ template "fullname" . }}
+            name: {{ template "name" . }}-cm
         - name: nginx-pvc
           persistentVolumeClaim:
-            claimName: {{ template "fullname" . }}-pvc
+            claimName: testpvc
