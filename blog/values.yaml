@@ -30,7 +30,7 @@ persistence:
   enabled: true
   storageClass: blog-sc
   accessMode: ReadWriteMany
-  size: 3Gi
+  size: 1Gi
   existingClaim: ""
 externalDatabase:
   existingSecret: ""

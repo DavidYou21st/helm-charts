@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: {{- .Values.persistence.storageClass -}}
+  name: blog-sc
   annotations: #添加了注释，表示StorageClass提供哪些卷类型，可以是hostPath和local，默认值为hostPath
     volumeType: hostPath
 
