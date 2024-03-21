@@ -1,12 +1,13 @@
-kind: PersistentVolume
 apiVersion: v1
+kind: PersistentVolume
 metadata:
   name: {{ template "fullname" . }}-pv
   labels:
     type: local
     pv: {{ template "fullname" . }}-pv
 spec:
-  storageClassName: blog-sc
+  {{ include "storageClass" . }}
+  persistentVolumeReclaimPolicy: Retain
   capacity:
     storage: 5Gi
   accessModes:
